@@ -59,30 +59,53 @@ func save2(c echo.Context) error {
 	return c.HTML(http.StatusOK, "<b>Thank you! "+name+"</b>")
 }
 
+func sendJson(c echo.Context) error {
+
+	type User struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	}
+
+	users := []User{
+		{Id: 1, Name: "test1"},
+		{Id: 2, Name: "test2"},
+	}
+
+	if err := c.Bind(users); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, users)
+	// or
+	// return c.XML(http.StatusCreated, u)
+}
+
 func main() {
+	// echo オブジェクトの指定
 	e := echo.New()
+	// ルート
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
 	})
+	// パス
 	e.GET("/users/:id", getUser)
+
+	// クエリ
 	e.GET("/show", show)
+
+	// ポスト
 	e.POST("/save", save)
 
-	type User struct {
-		Name  string `json:"name" xml:"name" form:"name" query:"name"`
-		Email string `json:"email" xml:"email" form:"email" query:"email"`
-	}
+	// リクエストにJsonを返す
+	e.GET("/users", sendJson)
 
-	e.POST("/users", func(c echo.Context) error {
-		u := new(User)
-		if err := c.Bind(u); err != nil {
-			return err
-		}
-		return c.JSON(http.StatusCreated, u)
-		// or
-		// return c.XML(http.StatusCreated, u)
-	})
 	e.Static("/static", "static")
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
+
+// やりたいこと
+// ユーザから送られてきたものを受信する
+// 階層を持つJsonを送る
+// 送られてきたJsonを適切にパースする
+// form,buttonの情報を取得する
+// DBからJsonを生成
